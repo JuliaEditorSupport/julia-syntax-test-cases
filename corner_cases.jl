@@ -38,9 +38,9 @@ end
 
 ## Function definitions with type variables.
 # Expected: `elsize` should be highlighted.
-elsize{T}(::AbstractArray{T}) = sizeof(T)
+elsize(::AbstractArray{T}) where {T} = sizeof(T)
 
-function elsize{T}(::AbstractArray{T})
+function elsize(::AbstractArray{T}) where T
     sizeof(T)
 end
 
@@ -138,17 +138,17 @@ bar =#
 ## Type declarations
 
 # Expected highlight `Foo` and `Bar`
-type Foo
+mutable struct Foo
     x::Bar
 end
 
 # Expected highlight `Foo` and `Bar`
-immutable Foo
+struct Foo
     x::Bar
 end
 
 # Expected: highlight `Foo` and `Bar`
-abstract Foo <: Bar
+abstract type Foo <: Bar
 
 # Expected: don't highlight x or y
 x <: y
@@ -165,7 +165,7 @@ function foo()
 end
 
 # Expected: highlight `T` and `Number`
-same_type_numeric{T<:Number}(x::T, y::T) = true
+same_type_numeric(x::T, y::T) where {T <: Number} = true
 
 ## Variable delcarations
 
