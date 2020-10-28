@@ -18,7 +18,7 @@ function foo_bar!(x,y)
     x + y + 1
 end
 
-# Expected: foo_bar!` should be highlighted.
+# Expected: `foo_bar!` should be highlighted.
 foo_bar!(x,y) = x + y
 
 # Expected: `foo` should be highlighted.
@@ -54,6 +54,9 @@ cell(dims::(Integer...)) = Array(Any, convert((Int...), dims))
 # Expected: `@hello_world!` should be highlighted.
 @hello_world! foo
 
+# Expected: highlight `myfun`
+@inline myfun() = println("myfun")
+
 ## Builtin functions.
 # Expected: `throw`, `error` and `super` should not be highlighted. There are
 # too many built-in functions for this to be useful.
@@ -75,12 +78,16 @@ bar"
 x = """hello "world" foobar"""
 y = """foo\\"""
 z = """bar\""""
+w = """"bar"""
 
 # Expected: highlight `$user`
 x = "hello $user"
 
 # Expected: don't highlight `$user`
 x = "hello \$user"
+
+# Expected: highlight `$val`
+x = """(a="$val")"""
 
 # Expected: treat r as part of the string, so `r"a"` is highlighted.
 x = r"0.1"
@@ -109,20 +116,30 @@ x = r"[abc]"
 # Expected: highlight escape sequences `\xff` and `\u2200`
 x = b"DATA\xff\u2200"
 
+# Bonus points:
+# Expected: don't highlight `$user`
+x = raw"hello $user"
+
 ## Characters
 # Expected: highlight the character.
 x = 'a'
 y = '\u0'
 z = '\U10ffff'
+w = '\x41'
 a = ' '
 b = '"'
+c = '''
+d = '\''
+e = '\\'
 
 # Expected: don't highlight, as ' is an operator here, not a character delimiter.
 a = b' + c'
+A'''
 
 # Bonus points:
 # Expected: don't highlight the character
 x = 'way too long so not a character'
+x = ''
 
 ## Comments
 # Expected: highlight `# foo`
@@ -134,6 +151,11 @@ bar =#
 
 # Expected: highlight `#= #= =# =#` (comments can nest).
 #= #= =# =#
+
+# Expected: highlight `'` as adjoint operator
+A#==#'
+(A)#==#'
+A[1]#==#'
 
 ## Type declarations
 
@@ -148,7 +170,7 @@ struct Foo
 end
 
 # Expected: highlight `Foo` and `Bar`
-abstract type Foo <: Bar
+abstract type Foo <: Bar end
 
 # Expected: don't highlight x or y
 x <: y
@@ -164,10 +186,32 @@ function foo()
     x
 end
 
+# Expected: highlight `Point` and `Real` as types
+function norm(p::Point{<:Real})
+    sqrt(p.x^2 + p.y^2)
+end
+
+# Expected: highlight `g` as function and `Int8` as type
+function g(x, y)::Int8
+   return x * y
+end
+       
 # Expected: highlight `T` and `Number`
 same_type_numeric(x::T, y::T) where {T <: Number} = true
+same_type_numeric(x::T, y::T) where T = false
 
-## Variable delcarations
+## Parametric type declaration
+
+# Expected: highlight `Pointy` and `T`
+abstract type Pointy{T} end
+
+# Expected: highlight `Point`, `Pointy` and `T`
+struct Point{T} <: Pointy{T}
+    x::T
+    y::T
+end
+
+## Variable declarations
 
 # Expected: highlight `x` and `y`
 global x = "foo, bar = 2", y = 3
@@ -204,6 +248,9 @@ end
 # Expected: highlight as index `end`
 foo[bar:end]
 
+# Expected: highlight as index `begin`
+foo[begin:4]
+
 # Expected: don't highlight `:123`
 x = :123
 
@@ -213,7 +260,7 @@ foo[bar:baz]
 # Expected: highlight `:baz`
 foo[:baz]
 
-# Expected: highlight `:baz`
+# Expected: highlight both `:baz`
 foo(:baz,:baz)
 
 # Note that `: foo` is currently a valid quoted symbol, this will hopefully
@@ -225,10 +272,38 @@ foo(:baz,:baz)
 # Expected: highlight `:end`
 [1 :end]
 
+# Expected: highlight `:two`
+@eval :one+:two
+
+# Expected: don't highlight `:end` but `end` as index
+[(1+1):end]
+
+# Expected: don't highlight `:end` but `end` as index
+[a[1]:end]
+
 # Expected: don't highlight `:foo`
 for x=1:foo
     print(x)
 end
+
+## Range detection
+
+# Bonus points:
+# Expected: don't highlight `:s2`
+push!(a, s1 :s2)
+
+# Bonus points:
+# Expected: don't highlight `:end`
+a[begin :end]
+
+## Expression evaluation
+
+# Expected: highlight `:` as operator
+a = :(x = 2)
+
+# Expected: highlight `:call` and `:b` as symbols
+# Debatable: highlight `:+` as operator
+ex = Expr(:call, :+, a, :b)
 
 ## Number highlighting
 
@@ -236,7 +311,6 @@ end
 x = 123
 x = 1.1
 x = .5
-x = -1
 x = 0x123abcdef
 x = 0o7
 x = 0b1011
@@ -245,17 +319,81 @@ x = 2.5E-4
 x = 1e+00
 x = 2.5f-4
 x = 0x.4p-1
+x = 1_000
 
 # Expected: highlight these as numbers or built-ins
 x = Inf
 x = NaN
 
-# Expected: highlight `123`
+# Expected: highlight `123`, not the letter
 y = 123x
+y = 123e
+
+# Expected: highlight `1e+1` and `1e-1`
+1e+1+1e-1
+
+# Expected: highlight `1.` and `.1`
+1. +.1
+# Note that `1.+1` is currently ambiguous and gives an error
+
+# Bonus points:
+# Expected: don't highlight `..`
+x = 1..3
+
+# Bonus points:
+# Debatable: highlight the first two digits, not the following digits
+# or show an error
+x = 0o1291
+x = 0b1091
 
 # Debatable: highlight `π` as a number or built-in
 # (note that `πx` is a single symbol, not `π * x`)
 x = π
 
-# Note that `x.3` is currently equivalent to `.3x` or `.3 * x`, but this
-# may change: https://github.com/JuliaLang/julia/issues/6770
+## List comprehension
+# Expected: highlight `for` and `if` without the `end` keyword
+[i for i in 1:5 if i%2==0]
+
+## Broadcasting
+# Expected: highlight `.+` as operator
+a.+1
+
+## Command
+# Expected: highlight "`echo 1`"
+c = `echo 1`
+
+# Expected: highlight "```echo `hello 1` ```"
+c = ```echo `hello 1` ```
+
+# Expected: highlight "raw`echo $1`"
+c = raw`echo $1`
+
+## Non-standard identifiers
+# Bonus points:
+# Expected: highlight `var"##"` as a function
+function var"##"(x)
+    println(x)
+end
+
+# Bonus points:
+# Expected: highlight `var"%%"` as a function
+var"%%"(x) = println(x)
+
+# Bonus points:
+# Expected: highlight `$var` as string and `##""` as comment
+"$var"##""
+
+# Bonus points:
+# Expected: highlight `$(var")(")` as string interpolation
+"$(var")(")"
+
+# Bonus points:
+# Expected: highlight `'` as adjoint operator
+var"##mat"'
+
+## Code folding: for and if in list comprehension
+# Expected: fold between function and last end
+function test(x)
+    a = (if x; 0 else 1 end)
+    println(a)
+end
