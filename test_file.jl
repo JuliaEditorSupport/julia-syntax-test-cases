@@ -148,7 +148,7 @@ struct Foo
 end
 
 # Expected: highlight `Foo` and `Bar`
-abstract type Foo <: Bar
+abstract type Foo <: Bar end
 
 # Expected: don't highlight x or y
 x <: y
