@@ -1,6 +1,16 @@
-## Julia syntax highlighting test.
-# This file is designed to test various corner cases of Julia
-# syntax highlighting.
+#= Julia syntax highlighting test.
+
+This file derives from https://gist.github.com/Wilfred/f1aca44c61ed6e1df603
+whose author is [@Wilfred](https://github.com/Wilfred). @Wilfred has put it in
+the public domain:
+  https://gist.github.com/Wilfred/f1aca44c61ed6e1df603#gistcomment-2948526
+
+Changes from the original are governed by the license of the repository in
+which this file is found.
+
+This file is designed to test various corner cases of Julia
+syntax highlighting.
+=#
 
 ## Simple function definitions.
 # Expected: `function` should be highlighted, as should `foo_bar!`.
@@ -28,9 +38,9 @@ end
 
 ## Function definitions with type variables.
 # Expected: `elsize` should be highlighted.
-elsize{T}(::AbstractArray{T}) = sizeof(T)
+elsize(::AbstractArray{T}) where {T} = sizeof(T)
 
-function elsize{T}(::AbstractArray{T})
+function elsize(::AbstractArray{T}) where T
     sizeof(T)
 end
 
@@ -128,17 +138,17 @@ bar =#
 ## Type declarations
 
 # Expected highlight `Foo` and `Bar`
-type Foo
+mutable struct Foo
     x::Bar
 end
 
 # Expected highlight `Foo` and `Bar`
-immutable Foo
+struct Foo
     x::Bar
 end
 
 # Expected: highlight `Foo` and `Bar`
-abstract Foo <: Bar
+abstract type Foo <: Bar
 
 # Expected: don't highlight x or y
 x <: y
@@ -155,7 +165,7 @@ function foo()
 end
 
 # Expected: highlight `T` and `Number`
-same_type_numeric{T<:Number}(x::T, y::T) = true
+same_type_numeric(x::T, y::T) where {T <: Number} = true
 
 ## Variable delcarations
 
