@@ -397,3 +397,14 @@ function test(x)
     a = (if x; 0 else 1 end)
     println(a)
 end
+
+# Expected: no folding. `begin` and `end` are keywords, not indices, `for` and `if` do not need `end` keywords
+b = [(begin n%2; n*2 end) for n in 1:10 if n>1]
+
+# Expected: no folding. `if`, `else` and `end` are keywords, not indices, `for` does not need an `end` keyword
+c = [(if isempty(a); missing else first(b) end) for (a, b) in zip(l1, l2)]
+
+# Expected: no folding. `for` does not need an `end` keyword
+d = (i for i in 1:10)
+
+## END
