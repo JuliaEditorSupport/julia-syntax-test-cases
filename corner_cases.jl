@@ -305,6 +305,13 @@ a = :(x = 2)
 # Debatable: highlight `:+` as operator
 ex = Expr(:call, :+, a, :b)
 
+
+## Pairs and anonymous functions
+
+# Expected: highlight `:b` as a symbol and `->` and `=>` as operators
+Dict(1=>:b)
+x->:b
+
 ## Number highlighting
 
 # Expected: highlight all these as numbers
