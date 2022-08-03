@@ -152,10 +152,25 @@ bar =#
 # Expected: highlight `#= #= =# =#` (comments can nest).
 #= #= =# =#
 
+# Expected: highlight all as nested comments.
+#=
+  #=
+   #=
+   =#
+  =#
+=#
+
+
 # Expected: highlight `'` as adjoint operator
 A#==#'
 (A)#==#'
 A[1]#==#'
+
+# Expected: highlight `'` as adjoint operator `#'` after as comment
+table!'#'
+
+# Expected: highlight `'#'` as char
+table[]!='#'
 
 ## Type declarations
 
