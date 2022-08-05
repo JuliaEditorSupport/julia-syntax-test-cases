@@ -135,6 +135,8 @@ e = '\\'
 # Expected: don't highlight, as ' is an operator here, not a character delimiter.
 a = b' + c'
 A'''
+x'x
+x'x'
 
 # Bonus points:
 # Expected: don't highlight the character
